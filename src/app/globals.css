@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/*
+ * Vive design tokens, ported from the React Native app.
+ *
+ * Source of truth: react-native-vive-app/src/utils/theme/_/themeTokens.ts and
+ * DESIGN.md. Token names are kept identical to that file so anything built here
+ * reads the same as the real app and can be lifted back into it.
+ *
+ * Where DESIGN.md notes a Figma-vs-code drift, Figma wins (it is stated to be
+ * the source of truth): canvas-primary dark #151515, highlight-green dark
+ * #1FD98E.
+ *
+ * Typeface: the real app uses TT Norms Pro, which is licensed and not
+ * available here. Plus Jakarta Sans is the closest free geometric humanist
+ * substitute and carries the same four weights.
+ */
+
+@theme inline {
+  --color-text-primary: var(--vive-text-primary);
+  --color-text-secondary: var(--vive-text-secondary);
+  --color-text-tertiary: var(--vive-text-tertiary);
+  --color-text-inverse: var(--vive-text-inverse);
+
+  --color-ui-primary: var(--vive-ui-primary);
+  --color-ui-secondary: var(--vive-ui-secondary);
+  --color-ui-tertiary: var(--vive-ui-tertiary);
+  --color-ui-warm: var(--vive-ui-warm);
+  --color-ui-shade: var(--vive-ui-shade);
+
+  --color-canvas-primary: var(--vive-canvas-primary);
+  --color-canvas-secondary: var(--vive-canvas-secondary);
+  --color-canvas-tertiary: var(--vive-canvas-tertiary);
+  --color-canvas-warm: var(--vive-canvas-warm);
+
+  --color-highlight-brand: #46baa5;
+  --color-highlight-green: var(--vive-highlight-green);
+  --color-highlight-orange: #ff961b;
+  --color-highlight-purple: #8d4cf6;
+  --color-highlight-red: #f23f5f;
+  --color-highlight-blue: #3ab6d1;
+  --color-highlight-brown: #cdb598;
+  --color-highlight-turquoise: #248465;
+  --color-highlight-yellow: #d8f25d;
+  --color-highlight-pink: #ffb0bb;
+
+  --color-brand-purple: #a096ff;
+
+  --font-sans: var(--font-vive-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* DESIGN.md typography scale. Sizes, line heights and tracking as specified. */
+  --text-headline-lg: 35px;
+  --text-headline-lg--line-height: 42px;
+  --text-headline-lg--letter-spacing: 0.14px;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 26px;
+  --text-headline-md--line-height: 31.2px;
+  --text-headline-md--letter-spacing: 0.1px;
+  --text-headline-md--font-weight: 700;
+
+  --text-headline-sm: 18px;
+  --text-headline-sm--line-height: 21.6px;
+  --text-headline-sm--letter-spacing: 0.07px;
+  --text-headline-sm--font-weight: 700;
+
+  --text-body-lg: 22px;
+  --text-body-lg--line-height: 33px;
+  --text-body-lg--letter-spacing: -0.66px;
+
+  --text-body: 18px;
+  --text-body--line-height: 25.2px;
+  --text-body--letter-spacing: 0.07px;
+
+  --text-sub: 15px;
+  --text-sub--line-height: 22.5px;
+  --text-sub--letter-spacing: 0.06px;
+
+  --text-label: 10px;
+  --text-label--line-height: 10px;
+  --text-label--letter-spacing: 0.04px;
+  --text-label--font-weight: 500;
+
+  /* DESIGN.md radius table. */
+  --radius-card: 12px;
+  --radius-dashboard: 24px;
+  --radius-dialog: 16px;
+  --radius-pill: 5px;
+  --radius-sheet: 24px;
+
+  /* DESIGN.md elevation: soft shadows in light mode only. */
+  --shadow-soft-sm: 0 2px 8px rgb(0 0 0 / 0.06);
+  --shadow-soft-md: 0 6px 16px rgb(0 0 0 / 0.08);
+}
+
+:root {
+  --vive-text-primary: #121212;
+  --vive-text-secondary: #434343;
+  --vive-text-tertiary: #828282;
+  --vive-text-inverse: #ffffff;
+
+  --vive-ui-primary: #d2d2d2;
+  --vive-ui-secondary: #eaeaea;
+  --vive-ui-tertiary: #f3f3f3;
+  --vive-ui-warm: #ece4da;
+  --vive-ui-shade: rgb(0 0 0 / 0.4);
+
+  --vive-canvas-primary: #ffffff;
+  --vive-canvas-secondary: rgb(255 255 255 / 0.7);
+  --vive-canvas-tertiary: #f6f6f6;
+  --vive-canvas-warm: #f9f2eb;
+
+  --vive-highlight-green: #1fc884;
+
+  /* Dark mode swaps shadows for a 1px border, per DESIGN.md. */
+  --vive-elevation-border: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vive-text-primary: #ffffff;
+    --vive-text-secondary: #c7c7c7;
+    --vive-text-tertiary: #6c6c6c;
+    --vive-text-inverse: #121212;
+
+    --vive-ui-primary: #3c3c3c;
+    --vive-ui-secondary: #2e2e2e;
+    --vive-ui-tertiary: #222222;
+    --vive-ui-warm: #2e2e2e;
+    --vive-ui-shade: rgb(0 0 0 / 0.8);
+
+    --vive-canvas-primary: #151515;
+    --vive-canvas-secondary: rgb(0 0 0 / 0.7);
+    --vive-canvas-tertiary: #000000;
+    --vive-canvas-warm: #000000;
+
+    --vive-highlight-green: #1fd98e;
+
+    --vive-elevation-border: rgb(60 60 60 / 0.6);
+  }
+}
+
+body {
+  background: var(--vive-canvas-tertiary);
+  color: var(--vive-text-primary);
+  font-family: var(--font-vive-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Cards. Light mode gets a soft shadow, dark mode a 1px border instead of a
+ * glow — DESIGN.md is explicit about this.
+ */
+@utility card-elevation-sm {
+  box-shadow: var(--shadow-soft-sm);
+  border: 1px solid var(--vive-elevation-border);
+}
+
+@utility card-elevation-md {
+  box-shadow: var(--shadow-soft-md);
+  border: 1px solid var(--vive-elevation-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-elevation-sm,
+  .card-elevation-md {
+    box-shadow: none;
+  }
+}
+
+/* Range input styled as the DESIGN.md slider: neutral track, brand thumb. */
+input[type="range"].vive-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"].vive-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--vive-ui-secondary);
+}
+
+input[type="range"].vive-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--vive-ui-secondary);
+}
+
+input[type="range"].vive-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -10px;
+  border-radius: 999px;
+  background: #46baa5;
+  border: 3px solid var(--vive-canvas-primary);
+  box-shadow: var(--shadow-soft-md);
+}
+
+input[type="range"].vive-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #46baa5;
+  border: 3px solid var(--vive-canvas-primary);
+}
+
+input[type="range"].vive-slider:focus-visible {
+  outline: 2px solid #46baa5;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
