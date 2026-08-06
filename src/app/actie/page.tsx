@@ -20,24 +20,25 @@ import {
   Screen,
   Slider,
   StickyFooter,
-  formatEuros,
 } from '@/components/ui'
+import { useI18n } from '@/i18n/LocaleProvider'
 import { euros } from '@/lib/pension/money'
-import { SCENARIO_LABELS_NL } from '@/lib/pension/types'
+import { SCENARIOS, SCENARIO_LABEL_KEYS } from '@/lib/pension/types'
 import { usePension } from '@/state/PensionProvider'
 
 /**
  * Screen 4 — what a contribution would do.
  *
- * Every sentence here is conditional: "als je X zou inleggen, dan …". Nothing
- * recommends an amount, nothing tells the user what they must do, and the user
- * initiates the contribution themselves. That is the Wft line between
- * informeren and adviseren.
+ * Every sentence here is conditional: "als je X zou inleggen, dan …" / "if you
+ * were to contribute X, then …". Nothing recommends an amount, nothing tells the
+ * user what they must do, and the user initiates the contribution. That is the
+ * Wft line between informeren and adviseren.
  */
 export default function ActionPage() {
   const router = useRouter()
   const { analysis, picture, hasConsented, extraMonthly, setExtraMonthly } =
     usePension()
+  const { t, tAround, formatEuros } = useI18n()
   const [stubOpen, setStubOpen] = useState(false)
 
   useEffect(() => {
@@ -62,71 +63,72 @@ export default function ActionPage() {
 
   const remainingGap = Math.max(0, expected.gapNet)
 
+  // Conditional sentence wrapping a live-updating number.
+  const conditional = tAround('action.conditional', 'income', {
+    amount: formatEuros(extraMonthly),
+  })
+
   return (
     <Screen>
-      <AppBar backHref="/resultaat" title="Wat kun je doen?" />
+      <AppBar backHref="/resultaat" title={t('action.title')} />
 
       <Gutter>
         {/* ------------------------------------------------- cost to close */}
         <Card dashboard elevated>
-          <MicroLabel>Om dit gat te dichten</MicroLabel>
+          <MicroLabel>{t('action.costLabel')}</MicroLabel>
           <p className="text-headline-lg mt-2 tabular-nums text-text-primary">
             {formatEuros(required.expected.monthly)}
           </p>
           <p className="text-sub text-text-secondary">
-            per maand extra inleggen, bij een rendement van{' '}
-            {(scenarios.expected.annualReturn * 100).toFixed(0)}%
+            {t('action.costDetail', {
+              rate: (scenarios.expected.annualReturn * 100).toFixed(0),
+            })}
           </p>
 
           <dl className="mt-5 grid grid-cols-3 gap-2 border-t border-ui-secondary pt-4">
-            {(['pessimistic', 'expected', 'optimistic'] as const).map(
-              (scenario) => (
-                <div key={scenario}>
-                  <dt className="text-label uppercase text-text-tertiary">
-                    {SCENARIO_LABELS_NL[scenario]}{' '}
-                    {(scenarios[scenario].annualReturn * 100).toFixed(0)}%
-                  </dt>
-                  <dd className="text-headline-sm mt-1 tabular-nums text-text-primary">
-                    {formatEuros(required[scenario].monthly)}
-                  </dd>
-                </div>
-              ),
-            )}
+            {SCENARIOS.map((scenario) => (
+              <div key={scenario}>
+                <dt className="text-label uppercase text-text-tertiary">
+                  {t(SCENARIO_LABEL_KEYS[scenario])}{' '}
+                  {(scenarios[scenario].annualReturn * 100).toFixed(0)}%
+                </dt>
+                <dd className="text-headline-sm mt-1 tabular-nums text-text-primary">
+                  {formatEuros(required[scenario].monthly)}
+                </dd>
+              </div>
+            ))}
           </dl>
           <p className="mt-2 text-sub text-text-tertiary">
-            Wat je nodig hebt, hangt af van het rendement. Daarom laten we drie
-            mogelijkheden zien.
+            {t('action.scenarioNote')}
           </p>
         </Card>
 
         {/* ------------------------------------------------------- slider */}
         <Card className="mt-4">
           <Slider
-            label="Extra inleg per maand"
+            label={t('action.slider.label')}
             value={Math.round(extraMonthly / 100)}
             min={0}
             max={sliderMaxEuros}
             step={5}
             onChange={(value) => setExtraMonthly(euros(value))}
             valueLabel={formatEuros(extraMonthly)}
-            minLabel="€ 0"
+            minLabel={formatEuros(0)}
             maxLabel={formatEuros(euros(sliderMaxEuros))}
           />
 
           <div className="mt-5 rounded-card bg-ui-tertiary p-4">
             {extraMonthly === 0 ? (
               <p className="text-body text-text-secondary">
-                Schuif om te zien wat een extra inleg met je verwachte inkomen
-                zou doen.
+                {t('action.slider.idle')}
               </p>
             ) : (
               <p className="text-body text-text-primary">
-                Als je {formatEuros(extraMonthly)} per maand extra zou inleggen,
-                dan wordt je verwachte inkomen{' '}
+                {conditional.before}
                 <span className="text-headline-sm tabular-nums text-text-primary">
                   <AnimatedEuros cents={expected.projectedNet} durationMs={350} />
-                </span>{' '}
-                netto per maand.
+                </span>
+                {conditional.after}
               </p>
             )}
 
@@ -142,17 +144,18 @@ export default function ActionPage() {
             <div className="mt-4 border-t border-ui-secondary pt-3">
               {remainingGap === 0 ? (
                 <div className="flex items-center gap-2">
-                  <Badge tone="green">Gat gedicht</Badge>
+                  <Badge tone="green">{t('action.gapClosed.badge')}</Badge>
                   <p className="text-sub text-text-secondary">
-                    In het verwachte scenario is er dan geen gat meer.
+                    {t('action.gapClosed.body')}
                   </p>
                 </div>
               ) : (
                 <Row
-                  label="Dan blijft er een gat van"
+                  label={t('action.gapRemains')}
                   amount={
                     <span className="tabular-nums">
-                      <AnimatedEuros cents={remainingGap} durationMs={350} /> p/m
+                      <AnimatedEuros cents={remainingGap} durationMs={350} />{' '}
+                      {t('perMonthShort')}
                     </span>
                   }
                 />
@@ -164,12 +167,12 @@ export default function ActionPage() {
         {/* -------------------------------------------- jaarruimte notice */}
         {required.expected.exceedsJaarruimte || overJaarruimte ? (
           <div className="mt-4">
-            <InfoBanner tone="warning" title="Let op de aftrek">
+            <InfoBanner tone="warning" title={t('action.jaarruimte.title')}>
               <p>
-                Je jaarruimte is ongeveer{' '}
-                {formatEuros(picture.jaarruimteAnnual)} per jaar, dus{' '}
-                {formatEuros(deductibleCeilingMonthly)} per maand. Leg je meer in?
-                Dan is dat deel niet aftrekbaar van de belasting.
+                {t('action.jaarruimte.body', {
+                  annual: formatEuros(picture.jaarruimteAnnual),
+                  monthly: formatEuros(deductibleCeilingMonthly),
+                })}
               </p>
 
               {extraMonthly > 0 ? (
@@ -192,14 +195,14 @@ export default function ActionPage() {
                   </div>
                   <figcaption className="mt-2 space-y-1">
                     <Row
-                      label="Wel aftrekbaar"
-                      amount={`${formatEuros(deductiblePart)} p/m`}
+                      label={t('action.jaarruimte.deductible')}
+                      amount={`${formatEuros(deductiblePart)} ${t('perMonthShort')}`}
                       tone="muted"
                     />
                     {nonDeductiblePart > 0 ? (
                       <Row
-                        label="Niet aftrekbaar"
-                        amount={`${formatEuros(nonDeductiblePart)} p/m`}
+                        label={t('action.jaarruimte.nonDeductible')}
+                        amount={`${formatEuros(nonDeductiblePart)} ${t('perMonthShort')}`}
                         tone="muted"
                       />
                     ) : null}
@@ -208,8 +211,7 @@ export default function ActionPage() {
               ) : null}
 
               <p className="mt-3 text-text-tertiary">
-                Dit is een indicatie op basis van een voorbeeldbedrag. Je echte
-                jaarruimte berekenen we pas als je verder gaat.
+                {t('action.jaarruimte.footnote')}
               </p>
             </InfoBanner>
           </div>
@@ -218,8 +220,7 @@ export default function ActionPage() {
         <IndicationNote className="mt-4" />
 
         <p className="mt-4 text-sub text-text-tertiary">
-          We vertellen je niet wat je moet doen en welk product bij je past. Je
-          ziet hier wat een inleg zou betekenen. Jij kiest zelf of je iets doet.
+          {t('disclaimer.notAdvice')}
         </p>
       </Gutter>
 
@@ -229,12 +230,10 @@ export default function ActionPage() {
         {stubOpen ? (
           <div className="mb-3 rounded-dialog bg-ui-tertiary p-4">
             <p className="text-headline-sm text-text-primary">
-              Prototype
+              {t('prototype.title')}
             </p>
             <p className="mt-1 text-sub text-text-secondary">
-              Hier zou de inleg-flow starten met{' '}
-              {formatEuros(extraMonthly)} per maand. In dit prototype gebeurt er
-              niets: er is geen koppeling en er wordt niets opgeslagen.
+              {t('action.stub.body', { amount: formatEuros(extraMonthly) })}
             </p>
             <Button
               variant="secondary"
@@ -242,18 +241,18 @@ export default function ActionPage() {
               className="mt-3"
               onClick={() => setStubOpen(false)}
             >
-              Sluiten
+              {t('nav.close')}
             </Button>
           </div>
         ) : null}
 
         <Button disabled={extraMonthly === 0} onClick={() => setStubOpen(true)}>
           {extraMonthly === 0
-            ? 'Kies eerst een bedrag'
-            : `Ik wil ${formatEuros(extraMonthly)} per maand inleggen`}
+            ? t('action.cta.pickAmount')
+            : t('action.cta.commit', { amount: formatEuros(extraMonthly) })}
         </Button>
         <ButtonLink href="/aannames" variant="link" className="mx-auto mt-3">
-          Pas de aannames aan
+          {t('action.cta.assumptions')}
         </ButtonLink>
       </StickyFooter>
 

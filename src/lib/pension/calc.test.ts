@@ -23,6 +23,8 @@ import {
   net,
   netToGross,
 } from './money'
+import { translate } from '@/i18n/translations'
+import { LOCALES } from '@/i18n/types'
 import { PERSONAS, findPersona } from './personas'
 import { SCENARIOS, type Assumptions, type FinancialPicture } from './types'
 
@@ -476,9 +478,12 @@ describe('persona sanity', () => {
     expect(gap).toBeLessThanOrEqual(euros(500))
   })
 
-  it('carries a Wtp note on Marks current accrual', () => {
+  it('carries a Wtp note on Marks current accrual, in both languages', () => {
     const current = mark.secondPillar.find((item) => item.toYear === null)
-    expect(current?.note).toMatch(/2027/)
+    expect(current?.noteKey).toBeDefined()
+    for (const locale of LOCALES) {
+      expect(translate(locale, current!.noteKey!)).toMatch(/2027/)
+    }
   })
 
   it('gives Daan the biggest gap relative to his target', () => {

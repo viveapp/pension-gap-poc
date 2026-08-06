@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react'
 
-import { formatEuros, type Cents } from '@/lib/pension/money'
+import { useI18n } from '@/i18n/LocaleProvider'
+import type { Cents } from '@/lib/pension/money'
 
 /**
  * Chart marks for the prototype.
@@ -39,18 +40,17 @@ export const BandBar = ({
   high,
   expected,
   target,
-  lowLabel = 'Voorzichtig',
-  highLabel = 'Optimistisch',
-  targetLabel = 'Nodig',
 }: {
   low: Cents
   high: Cents
   expected: Cents
   target: Cents
-  lowLabel?: string
-  highLabel?: string
-  targetLabel?: string
 }) => {
+  const { t, formatEuros } = useI18n()
+  const lowLabel = t('scenario.pessimistic')
+  const highLabel = t('scenario.optimistic')
+  const targetLabel = t('chart.needed')
+
   const scaleMax = Math.max(high, target) * 1.08 || 1
   const pct = (value: Cents) => clampPct((value / scaleMax) * 100)
 
@@ -108,7 +108,7 @@ export const BandBar = ({
           aria-hidden="true"
           className="mr-2 inline-block h-0 w-4 border-t-2 border-dashed border-text-primary align-middle"
         />
-        {targetLabel}: {formatEuros(target)} per maand
+        {targetLabel}: {formatEuros(target)} {t('perMonth')}
       </p>
     </figure>
   )
@@ -137,12 +137,12 @@ export type Bar = {
 export const BarChart = ({
   bars,
   height = 132,
-  suppressedNote = 'Groep te klein om te tonen',
 }: {
   bars: Bar[]
   height?: number
-  suppressedNote?: string
 }) => {
+  const { t } = useI18n()
+  const suppressedNote = t('employer.suppressed')
   const max = Math.max(...bars.map((bar) => (bar.suppressed ? 0 : bar.value)), 1)
 
   return (
@@ -159,7 +159,7 @@ export const BarChart = ({
                 title={suppressedNote}
               >
                 <p className="mb-1 text-center text-label uppercase text-text-tertiary">
-                  Te klein
+                  {t('chart.tooSmall')}
                 </p>
                 <div
                   className="rounded-t-[4px] border-2 border-dashed border-ui-primary"
@@ -210,30 +210,33 @@ export const StatTile = ({
   value,
   detail,
   suppressed = false,
-  suppressedNote = 'Groep te klein om te tonen',
 }: {
   label: string
   value: ReactNode
   detail?: string
   suppressed?: boolean
-  suppressedNote?: string
-}) => (
-  <div className="rounded-card bg-canvas-primary p-4 card-elevation-sm">
-    <p className="text-label uppercase text-text-tertiary">{label}</p>
-    {suppressed ? (
-      <p className="text-sub mt-2 text-text-tertiary">{suppressedNote}</p>
-    ) : (
-      <>
-        <p className="text-headline-md mt-1 tabular-nums text-text-primary">
-          {value}
+}) => {
+  const { t } = useI18n()
+  return (
+    <div className="rounded-card bg-canvas-primary p-4 card-elevation-sm">
+      <p className="text-label uppercase text-text-tertiary">{label}</p>
+      {suppressed ? (
+        <p className="text-sub mt-2 text-text-tertiary">
+          {t('employer.suppressed')}
         </p>
-        {detail ? (
-          <p className="text-sub text-text-tertiary">{detail}</p>
-        ) : null}
-      </>
-    )}
-  </div>
-)
+      ) : (
+        <>
+          <p className="text-headline-md mt-1 tabular-nums text-text-primary">
+            {value}
+          </p>
+          {detail ? (
+            <p className="text-sub text-text-tertiary">{detail}</p>
+          ) : null}
+        </>
+      )}
+    </div>
+  )
+}
 
 /* -------------------------------------------------------------------------- */
 /* Progress bar with a baseline reference marker                              */
@@ -312,10 +315,12 @@ export const DataTable = ({
   caption: string
   columns: [string, string]
   rows: { label: string; value: string }[]
-}) => (
+}) => {
+  const { t } = useI18n()
+  return (
   <details className="mt-3">
     <summary className="cursor-pointer text-sub text-highlight-turquoise underline underline-offset-2">
-      Toon als tabel
+      {t('chart.showTable')}
     </summary>
     <table className="mt-2 w-full border-collapse text-sub">
       <caption className="sr-only">{caption}</caption>
@@ -341,4 +346,5 @@ export const DataTable = ({
       </tbody>
     </table>
   </details>
-)
+  )
+}

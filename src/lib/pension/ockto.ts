@@ -1,3 +1,4 @@
+import type { MessageKey } from '@/i18n/translations'
 import { findPersona } from './personas'
 import type { FinancialDataProvider, FinancialPicture } from './types'
 
@@ -45,9 +46,9 @@ export const createMockOcktoProvider = (
 export type HandoffStage = {
   id: string
   /** Shown while this stage runs. */
-  label: string
+  labelKey: MessageKey
   /** Which party is being contacted, for the progress list. */
-  party: string
+  partyKey: MessageKey
   durationMs: number
 }
 
@@ -58,26 +59,26 @@ export type HandoffStage = {
 export const MOCK_HANDOFF_STAGES: HandoffStage[] = [
   {
     id: 'digid',
-    label: 'Inloggen met DigiD',
-    party: 'DigiD',
+    labelKey: 'stage.digid',
+    partyKey: 'stage.party.digid',
     durationMs: 900,
   },
   {
     id: 'mijnpensioenoverzicht',
-    label: 'Pensioenaanspraken ophalen',
-    party: 'Mijnpensioenoverzicht',
+    labelKey: 'stage.mijnpensioenoverzicht',
+    partyKey: 'stage.party.mijnpensioenoverzicht',
     durationMs: 1300,
   },
   {
     id: 'belastingdienst',
-    label: 'Inkomensgegevens ophalen',
-    party: 'Belastingdienst en UWV',
+    labelKey: 'stage.belastingdienst',
+    partyKey: 'stage.party.belastingdienst',
     durationMs: 1000,
   },
   {
     id: 'kadaster',
-    label: 'Woninggegevens ophalen',
-    party: 'Kadaster',
+    labelKey: 'stage.kadaster',
+    partyKey: 'stage.party.kadaster',
     durationMs: 800,
   },
 ]

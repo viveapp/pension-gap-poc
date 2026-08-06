@@ -43,6 +43,7 @@ export const ASSUMPTION_BOUNDS = {
   extraMonthlyContribution: { min: 0, max: 1000, step: 5 },
 } as const
 
-/** Shown next to every projected number. Informeren, niet adviseren. */
-export const INDICATION_DISCLAIMER =
-  'Indicatie op basis van aannames. Geen advies.'
+/**
+ * The disclaimer shown next to every projected number lives in the i18n layer as
+ * `disclaimer.indication` — informeren, niet adviseren, in both languages.
+ */

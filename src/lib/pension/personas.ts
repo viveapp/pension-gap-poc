@@ -28,7 +28,7 @@ const OWNER_SOURCES = [MIJNPENSIOENOVERZICHT, BELASTINGDIENST, UWV, KADASTER]
 const emma: FinancialPicture = {
   personaId: 'emma',
   displayName: 'Emma, 29',
-  summary: 'Huurt, één werkgever, veel tijd. Klein gat.',
+  summaryKey: 'persona.emma.summary',
   age: 29,
   household: 'single',
   currentNetMonthlyIncome: net(euros(2750)),
@@ -54,7 +54,7 @@ const emma: FinancialPicture = {
 const mark: FinancialPicture = {
   personaId: 'mark',
   displayName: 'Mark, 45',
-  summary: 'Koopwoning, vier pensioenpotjes, flink gat.',
+  summaryKey: 'persona.mark.summary',
   age: 45,
   household: 'partner',
   currentNetMonthlyIncome: net(euros(4500)),
@@ -86,8 +86,7 @@ const mark: FinancialPicture = {
       fromYear: 2021,
       toYear: null,
       grossMonthlyAtRetirement: gross(euros(330)),
-      note:
-        'Je opbouw bij deze werkgever is in 2027 veranderd door de nieuwe pensioenwet. Je bouwt nu op met een leeftijdsonafhankelijk percentage.',
+      noteKey: 'persona.mark.wtpNote',
     },
   ],
   vive: {
@@ -107,7 +106,7 @@ const mark: FinancialPicture = {
 const fatima: FinancialPicture = {
   personaId: 'fatima',
   displayName: 'Fatima, 55',
-  summary: 'Hoog inkomen, weinig tijd. Groot gat, boven de jaarruimte.',
+  summaryKey: 'persona.fatima.summary',
   age: 55,
   household: 'partner',
   currentNetMonthlyIncome: net(euros(6200)),
@@ -144,7 +143,7 @@ const fatima: FinancialPicture = {
 const daan: FinancialPicture = {
   personaId: 'daan',
   displayName: 'Daan, 38',
-  summary: 'ZZP’er, geen werkgeverspensioen. Grootste gat.',
+  summaryKey: 'persona.daan.summary',
   age: 38,
   household: 'single',
   currentNetMonthlyIncome: net(euros(3800)),

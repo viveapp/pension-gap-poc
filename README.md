@@ -13,9 +13,12 @@ reused.
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm test         # 77 unit tests on the calculation + aggregation modules
+npm test         # 95 unit tests on the calculation, aggregation and i18n modules
 npm run build
 ```
+
+The UI is bilingual: **Nederlands** (default) and **English**, switchable with the
+NL/EN toggle in every app bar. See [Bilingual](#bilingual) below.
 
 ## Screens
 
@@ -40,12 +43,19 @@ src/lib/pension/
   types.ts           Every shape, including the provider interface.
   constants.ts       AOW 2026, default assumptions, control bounds.
   calc.ts            Pure calculation. No React, no I/O, no clock.
-  calc.test.ts       60 tests.
+  calc.test.ts       61 tests.
   workforce.ts       Employer-side aggregation. Exposes aggregates only.
   workforce.test.ts  17 tests, including the privacy rule.
   ockto.ts           Mock data provider behind FinancialDataProvider.
   personas.ts        Four mock personas.
   sources.ts         What the consent screen asks for, as data.
+
+src/i18n/
+  types.ts           Locale union, locale tags, LocalizedText.
+  translations.ts    Dictionary assembly, interpolation, MessageKey.
+  translations.test.ts  17 tests: key parity, placeholder parity, formatting.
+  LocaleProvider.tsx    Context exposing t / tAround / formatEuros / formatPercent.
+  messages/          One file per screen, nl + en side by side.
 ```
 
 ### Net basis, enforced by the type system
@@ -89,13 +99,41 @@ there is no exported path to a single employee. Any displayed segment below
 `MIN_GROUP_SIZE` (10) is returned with `suppressed: true` and no number
 attached. Narrow the cohort filter on `/werkgever` to `50+` to see it fire.
 
+## Bilingual
+
+Dutch is the product language and the default: the app targets Dutch consumers
+and Dutch pension institutions, and the copy is written at B1 level. English is
+there for international employees and for stakeholders who do not read Dutch.
+
+- **All copy lives in `src/i18n/messages/`**, one file per screen with `nl` and
+  `en` next to each other. No screen contains a hardcoded string.
+- **`MessageKey` is derived from the Dutch dictionary**, and the English one is
+  typed `Record<MessageKey, string>` — so a missing English key is a *compile*
+  error, and an unknown `t('…')` key is too. `translations.test.ts` covers what
+  types cannot: extra keys, empty values, and mismatched `{placeholders}`.
+- **Sentences that wrap a live number** use `tAround(key, 'amount')`, which
+  splits the message at its placeholder. Dutch "Je komt {amount} per maand
+  tekort." and English "You will be {amount} per month short." both render
+  correctly without hardcoding word order.
+- **Numbers follow the locale.** Dutch formats as `€ 1.552`, English as
+  `€1,552` (en-IE — an English locale whose currency is the euro). `money.ts`
+  takes a BCP 47 tag and defaults to `nl-NL`, so the pure calculation module
+  never imports the i18n layer.
+- **Dutch is the fallback.** A missing English string shows Dutch, never a key.
+- Institution names (Mijnpensioenoverzicht, Belastingdienst, UWV, Kadaster,
+  DigiD) stay Dutch, glossed in English where it helps. Route paths stay Dutch.
+
+State is in memory, so the language resets to Dutch on reload, like everything
+else in the prototype.
+
 ## Compliance framing
 
 Informeren, not adviseren. Concretely: no "je moet" and no "wij adviseren";
 projections are phrased conditionally ("als je € X per maand zou inleggen,
-dan…"); every projected number carries "indicatie op basis van aannames" with a
-link to the assumptions; no product or risk-profile recommendations; the user
-initiates the contribution. Copy is Dutch at B1 level.
+dan…" / "if you were to contribute € X per month, then…"); every projected
+number carries "indicatie op basis van aannames" with a link to the assumptions;
+no product or risk-profile recommendations; the user initiates the contribution.
+Dutch copy is at B1 level, and the English follows the same register.
 
 ## Known prototype limits
 
@@ -107,6 +145,9 @@ initiates the contribution. Copy is Dutch at B1 level.
 - AOW amounts for 2026 are indicative.
 - `REFERENCE_YEAR` is a constant (2026) rather than the system clock, so every
   projection and test is deterministic.
+- Lowering the retirement age below 67 still pays the state pension from that
+  age, which real AOW would not. The horizon and returns adjust correctly; only
+  the AOW start date is unmodelled. The assumptions screen says so.
 - The DigiD step is deliberately a labelled demo with no government branding.
 - The design system is ported from `react-native-vive-app` (`DESIGN.md` +
   `themeTokens.ts`) into Tailwind tokens in `src/app/globals.css`. TT Norms Pro

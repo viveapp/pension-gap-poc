@@ -1,3 +1,4 @@
+import type { MessageKey } from '@/i18n/translations'
 import type { Cents, GrossCents, NetCents } from './money'
 
 /* -------------------------------------------------------------------------- */
@@ -13,10 +14,11 @@ export const SCENARIOS = [
   'optimistic',
 ] as const satisfies readonly Scenario[]
 
-export const SCENARIO_LABELS_NL: Record<Scenario, string> = {
-  pessimistic: 'Voorzichtig',
-  expected: 'Verwacht',
-  optimistic: 'Optimistisch',
+/** Message keys for the scenario names, resolved by the UI. */
+export const SCENARIO_LABEL_KEYS: Record<Scenario, MessageKey> = {
+  pessimistic: 'scenario.pessimistic',
+  expected: 'scenario.expected',
+  optimistic: 'scenario.optimistic',
 }
 
 /* -------------------------------------------------------------------------- */
@@ -29,11 +31,11 @@ export type Household = 'single' | 'partner'
 export type DataSource = {
   id: 'mijnpensioenoverzicht' | 'belastingdienst' | 'uwv' | 'kadaster'
   /** Party name as the user would recognise it. */
-  party: string
+  partyKey: MessageKey
   /** Exactly what is shared. Specific, not a category. */
-  shares: string[]
+  shareKeys: MessageKey[]
   /** Why Vive needs it. */
-  reason: string
+  reasonKey: MessageKey
 }
 
 /**
@@ -52,7 +54,7 @@ export type SecondPillarEntitlement = {
   /** Projected gross monthly benefit from the retirement date. */
   grossMonthlyAtRetirement: GrossCents
   /** Optional context, e.g. a Wtp accrual change. */
-  note?: string
+  noteKey?: MessageKey
 }
 
 export type Mortgage = {
@@ -78,7 +80,7 @@ export type FinancialPicture = {
   personaId: string
   displayName: string
   /** One-line description used by the persona switcher. */
-  summary: string
+  summaryKey: MessageKey
   age: number
   household: Household
   /** Net monthly income today. The basis for the target. */
@@ -151,13 +153,21 @@ export type TargetIncome = {
   retirementYear: number
 }
 
-/** One line of the projected-income breakdown, for progressive disclosure. */
+/**
+ * One line of the projected-income breakdown, for progressive disclosure.
+ *
+ * Carries the accrual period as numbers rather than a formatted string, so the
+ * calculation module stays free of language.
+ */
 export type BreakdownLine = {
   id: string
+  /** Employer name. A proper noun, so the same in every language. */
   label: string
   /** Net monthly contribution to the projection. */
   amountNet: NetCents
-  detail?: string
+  fromYear: number
+  /** `null` while still accruing. */
+  toYear: number | null
 }
 
 export type ScenarioResult = {

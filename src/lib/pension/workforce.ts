@@ -9,6 +9,7 @@
  * `suppressed: true` and no number attached.
  */
 
+import type { MessageKey } from '@/i18n/translations'
 import {
   capitalToGrossMonthlyIncome,
   growMonthlyContributions,
@@ -40,10 +41,11 @@ type Employee = {
   acted: boolean
 }
 
-export const COHORT_LABELS: Record<Cohort, string> = {
-  young: '20–34',
-  mid: '35–49',
-  senior: '50+',
+/** Message keys for the cohort ranges, resolved by the UI. */
+export const COHORT_LABEL_KEYS: Record<Cohort, MessageKey> = {
+  young: 'cohort.young',
+  mid: 'cohort.mid',
+  senior: 'cohort.senior',
 }
 
 export const COHORT_ORDER: Cohort[] = ['young', 'mid', 'senior']
@@ -152,7 +154,7 @@ export type GapBucketId = 'none' | 'under100' | 'from100' | 'from300' | 'over500
 
 type BucketSpec = {
   id: GapBucketId
-  label: string
+  labelKey: MessageKey
   /** Inclusive lower bound in cents. */
   min: Cents
   /** Exclusive upper bound in cents, or `null` for open-ended. */
@@ -160,11 +162,11 @@ type BucketSpec = {
 }
 
 export const GAP_BUCKETS: BucketSpec[] = [
-  { id: 'none', label: 'Geen gat', min: 0, max: 1 },
-  { id: 'under100', label: '< € 100', min: 1, max: euros(100) },
-  { id: 'from100', label: '€ 100–300', min: euros(100), max: euros(300) },
-  { id: 'from300', label: '€ 300–500', min: euros(300), max: euros(500) },
-  { id: 'over500', label: '> € 500', min: euros(500), max: null },
+  { id: 'none', labelKey: 'bucket.none', min: 0, max: 1 },
+  { id: 'under100', labelKey: 'bucket.under100', min: 1, max: euros(100) },
+  { id: 'from100', labelKey: 'bucket.from100', min: euros(100), max: euros(300) },
+  { id: 'from300', labelKey: 'bucket.from300', min: euros(300), max: euros(500) },
+  { id: 'over500', labelKey: 'bucket.over500', min: euros(500), max: null },
 ]
 
 const bucketFor = (gapMonthly: Cents): GapBucketId => {
@@ -213,7 +215,8 @@ const extraNetIncomeFor = (
 /* -------------------------------------------------------------------------- */
 
 export type Segment = {
-  label: string
+  /** Message key for the segment's label. The UI resolves it. */
+  labelKey: MessageKey
   count: number
   /** True when the group is below MIN_GROUP_SIZE. No number may be shown. */
   suppressed: boolean
@@ -293,7 +296,7 @@ export const aggregateWorkforce = (
     ).length
     return {
       bucketId: bucket.id,
-      label: bucket.label,
+      labelKey: bucket.labelKey,
       count,
       // A bucket that is non-empty but tiny would narrow people down. Hide it.
       suppressed:
@@ -306,7 +309,7 @@ export const aggregateWorkforce = (
     const suppressed = members.length > 0 && members.length < MIN_GROUP_SIZE
     return {
       cohortId,
-      label: COHORT_LABELS[cohortId],
+      labelKey: COHORT_LABEL_KEYS[cohortId],
       count: members.length,
       suppressed,
       averageGapMonthly: suppressed
@@ -334,11 +337,18 @@ export const aggregateWorkforce = (
   }
 }
 
-export const COHORT_FILTER_OPTIONS: { id: CohortFilter; label: string }[] = [
-  { id: 'all', label: 'Alle leeftijden' },
+/**
+ * Filter options for the distribution chart. `all` gets its own label; the
+ * cohorts reuse their range key, which the UI wraps in "… jaar" / "age …".
+ */
+export const COHORT_FILTER_OPTIONS: {
+  id: CohortFilter
+  labelKey: MessageKey
+}[] = [
+  { id: 'all', labelKey: 'employer.filter.all' },
   ...COHORT_ORDER.map((cohortId) => ({
     id: cohortId as CohortFilter,
-    label: `${COHORT_LABELS[cohortId]} jaar`,
+    labelKey: COHORT_LABEL_KEYS[cohortId],
   })),
 ]
 

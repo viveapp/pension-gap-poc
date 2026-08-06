@@ -20,9 +20,10 @@ import {
   Row,
   Screen,
   StickyFooter,
-  formatEuros,
 } from '@/components/ui'
-import { SCENARIO_LABELS_NL } from '@/lib/pension/types'
+import { useI18n } from '@/i18n/LocaleProvider'
+import { SCENARIOS, SCENARIO_LABEL_KEYS } from '@/lib/pension/types'
+import type { BreakdownLine } from '@/lib/pension/types'
 import { usePension } from '@/state/PensionProvider'
 
 /**
@@ -35,6 +36,7 @@ import { usePension } from '@/state/PensionProvider'
 export default function ResultPage() {
   const router = useRouter()
   const { analysis, picture, hasConsented } = usePension()
+  const { t, tAround, formatEuros } = useI18n()
 
   useEffect(() => {
     if (!hasConsented || !analysis) router.replace('/')
@@ -46,6 +48,20 @@ export default function ResultPage() {
   const expected = scenarios.expected
   const onTrack = expected.onTrack
 
+  // The gap heading wraps an animated number, so the sentence is split around
+  // its placeholder rather than assuming Dutch word order.
+  const gapHeading = tAround('result.gap.heading', 'amount')
+
+  const period = (line: BreakdownLine) =>
+    line.toYear === null
+      ? t('result.employers.periodOpen', { from: line.fromYear })
+      : t('result.employers.periodClosed', {
+          from: line.fromYear,
+          to: line.toYear,
+        })
+
+  const employerCount = expected.breakdown.secondPillar.length
+
   return (
     <Screen>
       <AppBar
@@ -55,7 +71,7 @@ export default function ResultPage() {
             href="/aannames"
             className="text-sub text-highlight-turquoise underline underline-offset-2"
           >
-            Aannames
+            {t('nav.assumptions')}
           </Link>
         }
       />
@@ -63,13 +79,15 @@ export default function ResultPage() {
       <Gutter>
         {/* ------------------------------------------------ headline reveal */}
         <Card dashboard elevated>
-          <MicroLabel>Verwacht netto per maand na je pensioen</MicroLabel>
+          <MicroLabel>{t('result.headlineLabel')}</MicroLabel>
           <p className="text-headline-lg mt-2 tabular-nums text-text-primary">
             <AnimatedEuros cents={expected.projectedNet} revealFromZero />
           </p>
           <p className="text-sub text-text-tertiary">
-            vanaf je {analysis.assumptions.retirementAge}e, in{' '}
-            {target.retirementYear}
+            {t('result.fromAge', {
+              age: analysis.assumptions.retirementAge,
+              year: target.retirementYear,
+            })}
           </p>
 
           <div className="mt-6">
@@ -86,47 +104,46 @@ export default function ResultPage() {
         <Card className="mt-4">
           {onTrack ? (
             <>
-              <Badge tone="green">Op koers</Badge>
+              <Badge tone="green">{t('result.onTrack.badge')}</Badge>
               <h2 className="text-headline-md mt-3 text-text-primary">
-                Je bent op koers.
+                {t('result.onTrack.heading')}
               </h2>
               <p className="mt-2 text-body text-text-secondary">
-                Je verwachte inkomen is hoger dan het bedrag dat je volgens deze
-                aannames nodig hebt. Je hoeft niets te doen.
+                {t('result.onTrack.body')}
               </p>
             </>
           ) : (
             <>
-              <Badge tone="orange">Er is een gat</Badge>
+              <Badge tone="orange">{t('result.gap.badge')}</Badge>
               <h2 className="text-headline-md mt-3 text-text-primary">
-                Je komt{' '}
+                {gapHeading.before}
                 <span className="text-highlight-red tabular-nums">
                   <AnimatedEuros cents={expected.gapNet} durationMs={700} />
-                </span>{' '}
-                per maand tekort.
+                </span>
+                {gapHeading.after}
               </h2>
               <p className="mt-2 text-body text-text-secondary">
-                Je hebt {formatEuros(target.targetNet)} per maand nodig. Volgens
-                deze aannames krijg je {formatEuros(expected.projectedNet)}.
+                {t('result.gap.body', {
+                  target: formatEuros(target.targetNet),
+                  projected: formatEuros(expected.projectedNet),
+                })}
               </p>
 
               <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-ui-secondary pt-4">
-                {(['pessimistic', 'expected', 'optimistic'] as const).map(
-                  (scenario) => (
-                    <div key={scenario}>
-                      <dt className="text-label uppercase text-text-tertiary">
-                        {SCENARIO_LABELS_NL[scenario]}{' '}
-                        {(scenarios[scenario].annualReturn * 100).toFixed(0)}%
-                      </dt>
-                      <dd className="text-headline-sm mt-1 tabular-nums text-text-primary">
-                        {formatEuros(Math.max(0, scenarios[scenario].gapNet))}
-                      </dd>
-                    </div>
-                  ),
-                )}
+                {SCENARIOS.map((scenario) => (
+                  <div key={scenario}>
+                    <dt className="text-label uppercase text-text-tertiary">
+                      {t(SCENARIO_LABEL_KEYS[scenario])}{' '}
+                      {(scenarios[scenario].annualReturn * 100).toFixed(0)}%
+                    </dt>
+                    <dd className="text-headline-sm mt-1 tabular-nums text-text-primary">
+                      {formatEuros(Math.max(0, scenarios[scenario].gapNet))}
+                    </dd>
+                  </div>
+                ))}
               </dl>
               <p className="mt-2 text-sub text-text-tertiary">
-                Het gat per maand, bij drie mogelijke rendementen.
+                {t('result.gap.bandNote')}
               </p>
             </>
           )}
@@ -136,26 +153,30 @@ export default function ResultPage() {
 
         {/* ---------------------------------------- breakdown: what you get */}
         <h2 className="text-headline-sm mt-8 text-text-primary">
-          Waar je inkomen vandaan komt
+          {t('result.sources.heading')}
         </h2>
         <Card className="mt-3 py-0">
           <Disclosure
             summary={
               <>
-                <p className="text-body text-text-primary">AOW</p>
+                <p className="text-body text-text-primary">
+                  {t('result.aow.label')}
+                </p>
                 <p className="text-sub text-text-tertiary">
-                  Van de overheid ·{' '}
-                  {picture.household === 'single'
-                    ? 'alleenstaand'
-                    : 'met partner'}
+                  {t('result.aow.detail', {
+                    household: t(
+                      picture.household === 'single'
+                        ? 'result.household.single'
+                        : 'result.household.partner',
+                    ),
+                  })}
                 </p>
               </>
             }
             amount={formatEuros(expected.breakdown.aow)}
           >
             <p className="text-sub text-text-secondary">
-              Dit is het netto AOW-bedrag van 2026 voor jouw situatie. Je krijgt
-              AOW vanaf je AOW-leeftijd. Het bedrag kan later veranderen.
+              {t('result.aow.body')}
             </p>
           </Disclosure>
 
@@ -163,25 +184,25 @@ export default function ResultPage() {
             summary={
               <>
                 <p className="text-body text-text-primary">
-                  Pensioen via werkgevers
+                  {t('result.employers.label')}
                 </p>
                 <p className="text-sub text-text-tertiary">
-                  {expected.breakdown.secondPillar.length === 0
-                    ? 'Je hebt geen pensioen via een werkgever'
-                    : `${expected.breakdown.secondPillar.length} ${
-                        expected.breakdown.secondPillar.length === 1
-                          ? 'potje'
-                          : 'potjes'
-                      }`}
+                  {employerCount === 0
+                    ? t('result.employers.none')
+                    : t(
+                        employerCount === 1
+                          ? 'result.employers.count.one'
+                          : 'result.employers.count.other',
+                        { count: employerCount },
+                      )}
                 </p>
               </>
             }
             amount={formatEuros(expected.breakdown.secondPillarTotal)}
           >
-            {expected.breakdown.secondPillar.length === 0 ? (
+            {employerCount === 0 ? (
               <p className="text-sub text-text-secondary">
-                Je werkt voor jezelf. Daarom bouw je geen pensioen op via een
-                werkgever. Je AOW en je eigen inleg bepalen samen je inkomen.
+                {t('result.employers.zzpBody')}
               </p>
             ) : (
               <>
@@ -189,20 +210,21 @@ export default function ResultPage() {
                   <Row
                     key={line.id}
                     label={line.label}
-                    detail={line.detail}
+                    detail={period(line)}
                     amount={formatEuros(line.amountNet)}
                     tone="muted"
                   />
                 ))}
                 <p className="mt-2 text-sub text-text-tertiary">
-                  Deze bedragen zijn netto. Mijnpensioenoverzicht laat bruto
-                  bedragen zien.
+                  {t('result.employers.netNote')}
                 </p>
                 {picture.secondPillar
-                  .filter((item) => item.note)
+                  .filter((item) => item.noteKey)
                   .map((item) => (
                     <div key={item.id} className="mt-3">
-                      <InfoBanner title={item.employer}>{item.note}</InfoBanner>
+                      <InfoBanner title={item.employer}>
+                        {t(item.noteKey!)}
+                      </InfoBanner>
                     </div>
                   ))}
               </>
@@ -212,22 +234,26 @@ export default function ResultPage() {
           <Disclosure
             summary={
               <>
-                <p className="text-body text-text-primary">Je Vive-pot</p>
+                <p className="text-body text-text-primary">
+                  {t('result.vive.label')}
+                </p>
                 <p className="text-sub text-text-tertiary">
-                  Nu {formatEuros(picture.vive.balance)} ·{' '}
-                  {formatEuros(picture.vive.monthlyContribution)} per maand
+                  {t('result.vive.detail', {
+                    balance: formatEuros(picture.vive.balance),
+                    monthly: formatEuros(picture.vive.monthlyContribution),
+                  })}
                 </p>
               </>
             }
             amount={formatEuros(expected.breakdown.vive)}
           >
             <Row
-              label="Uit wat je nu al hebt"
+              label={t('result.vive.fromBalance')}
               amount={formatEuros(expected.viveAttribution.fromBalance)}
               tone="muted"
             />
             <Row
-              label="Uit je huidige inleg"
+              label={t('result.vive.fromCurrent')}
               amount={formatEuros(
                 expected.viveAttribution.fromCurrentContribution,
               )}
@@ -235,7 +261,7 @@ export default function ResultPage() {
             />
             {analysis.extraMonthlyContribution > 0 ? (
               <Row
-                label="Uit je extra inleg"
+                label={t('result.vive.fromExtra')}
                 amount={formatEuros(
                   expected.viveAttribution.fromExtraContribution,
                 )}
@@ -243,53 +269,64 @@ export default function ResultPage() {
               />
             ) : null}
             <p className="mt-2 text-sub text-text-tertiary">
-              Bij een rendement van{' '}
-              {(expected.annualReturn * 100).toFixed(0)}% groeit je pot naar{' '}
-              {formatEuros(expected.viveCapitalAtRetirement)}. Dat bedrag keren
-              we daarna uit over {analysis.assumptions.payoutYears} jaar.
+              {t('result.vive.growth', {
+                rate: (expected.annualReturn * 100).toFixed(0),
+                capital: formatEuros(expected.viveCapitalAtRetirement),
+                years: analysis.assumptions.payoutYears,
+              })}
             </p>
           </Disclosure>
         </Card>
 
         <DataTable
-          caption="Verwacht netto inkomen per maand, per bron"
-          columns={['Bron', 'Netto per maand']}
+          caption={t('result.table.caption')}
+          columns={[t('result.table.source'), t('result.table.amount')]}
           rows={[
-            { label: 'AOW', value: formatEuros(expected.breakdown.aow) },
+            {
+              label: t('result.aow.label'),
+              value: formatEuros(expected.breakdown.aow),
+            },
             ...expected.breakdown.secondPillar.map((line) => ({
               label: line.label,
               value: formatEuros(line.amountNet),
             })),
-            { label: 'Vive', value: formatEuros(expected.breakdown.vive) },
-            { label: 'Totaal', value: formatEuros(expected.projectedNet) },
+            {
+              label: t('result.vive.label'),
+              value: formatEuros(expected.breakdown.vive),
+            },
+            {
+              label: t('result.table.total'),
+              value: formatEuros(expected.projectedNet),
+            },
           ]}
         />
 
         {/* --------------------------------------- breakdown: what you need */}
         <h2 className="text-headline-sm mt-8 text-text-primary">
-          Wat je nodig hebt
+          {t('result.need.heading')}
         </h2>
         <Card className="mt-3 py-0">
           <Disclosure
             summary={
               <>
                 <p className="text-body text-text-primary">
-                  {(analysis.assumptions.targetIncomePct * 100).toFixed(0)}% van
-                  je inkomen nu
+                  {t('result.need.pct.label', {
+                    pct: (analysis.assumptions.targetIncomePct * 100).toFixed(0),
+                  })}
                 </p>
                 <p className="text-sub text-text-tertiary">
-                  Nu netto {formatEuros(picture.currentNetMonthlyIncome)} per
-                  maand
+                  {t('result.need.pct.detail', {
+                    income: formatEuros(picture.currentNetMonthlyIncome),
+                  })}
                 </p>
               </>
             }
             amount={formatEuros(target.baseTarget)}
           >
             <p className="text-sub text-text-secondary">
-              Na je pensioen heb je meestal minder geld nodig dan nu. We rekenen
-              standaard met{' '}
-              {(analysis.assumptions.targetIncomePct * 100).toFixed(0)}%. Je kunt
-              dit zelf aanpassen bij de aannames.
+              {t('result.need.pct.body', {
+                pct: (analysis.assumptions.targetIncomePct * 100).toFixed(0),
+              })}
             </p>
           </Disclosure>
 
@@ -298,12 +335,15 @@ export default function ResultPage() {
               summary={
                 <>
                   <p className="text-body text-text-primary">
-                    Effect van je woning
+                    {t('result.home.label')}
                   </p>
                   <p className="text-sub text-text-tertiary">
-                    {target.mortgagePaidOffBeforeRetirement
-                      ? `Hypotheek afgelost in ${picture.mortgage.paidOffYear}`
-                      : `Hypotheek loopt door tot ${picture.mortgage.paidOffYear}`}
+                    {t(
+                      target.mortgagePaidOffBeforeRetirement
+                        ? 'result.home.paidOff'
+                        : 'result.home.runsOn',
+                      { year: picture.mortgage.paidOffYear },
+                    )}
                   </p>
                 </>
               }
@@ -314,27 +354,31 @@ export default function ResultPage() {
               }
             >
               {target.mortgageOffset > 0 ? (
-                <p className="text-sub text-text-secondary">
-                  Je hypotheek is in {picture.mortgage.paidOffYear} afgelost, dus
-                  vóór je pensioen in {target.retirementYear}. Dan stopt je
-                  maandlast van{' '}
-                  {formatEuros(picture.mortgage.netMonthlyPayment)}. Daarom heb je
-                  later minder geld nodig.{' '}
-                  <strong>Dit is een aanname:</strong> we gaan ervan uit dat je
-                  in je woning blijft en de hypotheek niet verandert.
-                </p>
+                <>
+                  <p className="text-sub text-text-secondary">
+                    {t('result.home.offsetBody', {
+                      year: picture.mortgage.paidOffYear,
+                      retirementYear: target.retirementYear,
+                      amount: formatEuros(picture.mortgage.netMonthlyPayment),
+                    })}
+                  </p>
+                  <p className="mt-2 text-sub text-text-secondary">
+                    {t('result.home.offsetCaveat')}
+                  </p>
+                </>
               ) : (
                 <p className="text-sub text-text-secondary">
-                  Je hypotheek loopt tot {picture.mortgage.paidOffYear} en dus
-                  door na je pensioen in {target.retirementYear}. We halen je
-                  maandlast daarom niet van je doelbedrag af.
+                  {t('result.home.runsOnBody', {
+                    year: picture.mortgage.paidOffYear,
+                    retirementYear: target.retirementYear,
+                  })}
                 </p>
               )}
               {picture.homeValue ? (
                 <p className="mt-2 text-sub text-text-tertiary">
-                  Waarde van je woning volgens het Kadaster:{' '}
-                  {formatEuros(picture.homeValue)}. We rekenen de waarde van je
-                  woning niet mee als inkomen.
+                  {t('result.home.kadaster', {
+                    value: formatEuros(picture.homeValue),
+                  })}
                 </p>
               ) : null}
             </Disclosure>
@@ -343,25 +387,24 @@ export default function ResultPage() {
               summary={
                 <>
                   <p className="text-body text-text-primary">
-                    Effect van je woning
+                    {t('result.home.label')}
                   </p>
                   <p className="text-sub text-text-tertiary">
-                    Je hebt geen koopwoning
+                    {t('result.home.noHome')}
                   </p>
                 </>
               }
               amount={formatEuros(0)}
             >
               <p className="text-sub text-text-secondary">
-                Je huurt. We gaan ervan uit dat je ook na je pensioen huur
-                betaalt. Daarom halen we niets van je doelbedrag af.
+                {t('result.home.renterBody')}
               </p>
             </Disclosure>
           )}
 
           <div className="border-t border-ui-secondary py-4">
             <Row
-              label={<strong>Totaal per maand</strong>}
+              label={<strong>{t('result.need.total')}</strong>}
               amount={<strong>{formatEuros(target.targetNet)}</strong>}
             />
           </div>
@@ -373,17 +416,16 @@ export default function ResultPage() {
       <StickyFooter>
         {onTrack ? (
           <ButtonLink href="/actie" variant="secondary">
-            Bekijk wat extra inleggen doet
+            {t('result.cta.onTrack')}
           </ButtonLink>
         ) : (
-          <ButtonLink href="/actie">
-            Wat kost het om dit gat te dichten?
-          </ButtonLink>
+          <ButtonLink href="/actie">{t('result.cta.gap')}</ButtonLink>
         )}
         {!onTrack ? (
           <p className="mt-3 text-center text-sub text-text-tertiary">
-            Ongeveer {formatEuros(required.expected.monthly)} per maand. Jij
-            beslist.
+            {t('result.cta.footnote', {
+              amount: formatEuros(required.expected.monthly),
+            })}
           </p>
         ) : null}
       </StickyFooter>

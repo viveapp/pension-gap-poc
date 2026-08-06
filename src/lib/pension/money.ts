@@ -92,24 +92,37 @@ export const allocateCents = (total: Cents, weights: number[]): Cents[] => {
   return parts
 }
 
-const wholeEuroFormatter = new Intl.NumberFormat('nl-NL', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
+/**
+ * Formatters are cached per locale tag. This module stays app-agnostic: it takes
+ * a BCP 47 tag, not the app's `Locale` union, so the calculation layer never
+ * imports anything from the i18n layer.
+ */
+const formatterCache = new Map<string, Intl.NumberFormat>()
 
-const centsFormatter = new Intl.NumberFormat('nl-NL', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+const formatter = (localeTag: string, fractionDigits: 0 | 2) => {
+  const cacheKey = `${localeTag}:${fractionDigits}`
+  const cached = formatterCache.get(cacheKey)
+  if (cached) return cached
 
-/** Display helper: "€ 1.552". Rounds for display only. */
-export const formatEuros = (cents: Cents): string =>
-  wholeEuroFormatter.format(Math.round(cents) / 100)
+  const created = new Intl.NumberFormat(localeTag, {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })
+  formatterCache.set(cacheKey, created)
+  return created
+}
 
-/** Display helper: "€ 1.552,15". */
-export const formatEurosWithCents = (cents: Cents): string =>
-  centsFormatter.format(Math.round(cents) / 100)
+/**
+ * Display helper. "€ 1.552" in nl-NL, "€1,552" in en-IE. Rounds for display
+ * only — the underlying amount stays on integer cents.
+ */
+export const formatEuros = (cents: Cents, localeTag = 'nl-NL'): string =>
+  formatter(localeTag, 0).format(Math.round(cents) / 100)
+
+/** Display helper with cents: "€ 1.552,15" / "€1,552.15". */
+export const formatEurosWithCents = (
+  cents: Cents,
+  localeTag = 'nl-NL',
+): string => formatter(localeTag, 2).format(Math.round(cents) / 100)

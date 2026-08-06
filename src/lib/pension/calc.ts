@@ -199,9 +199,8 @@ export const computeScenario = (
       item.grossMonthlyAtRetirement,
       assumptions.retireeTaxRate,
     ),
-    detail: item.toYear === null
-      ? `${item.fromYear} – nu`
-      : `${item.fromYear} – ${item.toYear}`,
+    fromYear: item.fromYear,
+    toYear: item.toYear,
   }))
   const secondPillarTotal = sumNet(
     ...secondPillar.map((line) => line.amountNet),

@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
 import { BarChart, DataTable, ReferenceBar, StatTile } from '@/components/charts'
-import { Card, InfoBanner, MicroLabel, Slider, formatEuros } from '@/components/ui'
+import { LocaleSwitch } from '@/components/LocaleSwitch'
+import { Card, InfoBanner, MicroLabel, Slider } from '@/components/ui'
+import { useI18n } from '@/i18n/LocaleProvider'
 import { euros } from '@/lib/pension/money'
-import { SCENARIO_LABELS_NL, type Scenario } from '@/lib/pension/types'
+import { SCENARIOS, SCENARIO_LABEL_KEYS, type Scenario } from '@/lib/pension/types'
 import {
   COHORT_FILTER_OPTIONS,
   EMPLOYER_CONTRIBUTION_BOUNDS,
@@ -15,10 +17,6 @@ import {
   type CohortFilter,
 } from '@/lib/pension/workforce'
 import { usePension } from '@/state/PensionProvider'
-
-const SUPPRESSED = 'Groep te klein om te tonen'
-
-const percent = (share: number) => `${Math.round(share * 100)}%`
 
 /**
  * Screen 6 — the employer view.
@@ -33,6 +31,7 @@ const percent = (share: number) => `${Math.round(share * 100)}%`
  */
 export default function EmployerPage() {
   const { assumptions } = usePension()
+  const { t, formatEuros, formatPercent } = useI18n()
   const [contribution, setContribution] = useState(50)
   const [filter, setFilter] = useState<CohortFilter>('all')
 
@@ -59,6 +58,8 @@ export default function EmployerPage() {
     [assumptions, contribution],
   )
 
+  const suppressed = t('employer.suppressed')
+
   return (
     <div className="min-h-dvh bg-canvas-tertiary">
       {/* --------------------------------------------------------- header */}
@@ -66,60 +67,64 @@ export default function EmployerPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4 sm:px-6">
           <div>
             <MicroLabel className="text-highlight-turquoise">
-              Vive · Werkgeversdashboard
+              {t('employer.eyebrow')}
             </MicroLabel>
             <h1 className="text-headline-md mt-1 text-text-primary">
-              Kernwaarde Groep
+              {t('employer.company')}
             </h1>
           </div>
           <p className="text-sub text-text-tertiary">
-            {baseline.headcount} medewerkers
+            {t('employer.headcount', { count: baseline.headcount })}
           </p>
-          <Link
-            href="/"
-            className="ml-auto text-sub text-highlight-turquoise underline underline-offset-2"
-          >
-            Naar de medewerkersweergave
-          </Link>
+          <div className="ml-auto flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sub text-highlight-turquoise underline underline-offset-2"
+            >
+              {t('employer.toEmployeeView')}
+            </Link>
+            <LocaleSwitch />
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-        <InfoBanner title="Je ziet alleen totalen">
-          Dit dashboard is gebouwd op geanonimiseerde totalen. Je ziet nooit
-          gegevens van één medewerker. Groepen kleiner dan {MIN_GROUP_SIZE}{' '}
-          personen laten we niet zien.
+        <InfoBanner title={t('employer.privacy.title')}>
+          {t('employer.privacy.body', { min: MIN_GROUP_SIZE })}
         </InfoBanner>
 
         {/* ------------------------------------------------------- KPI row */}
         <section>
-          <h2 className="text-headline-sm text-text-primary">Nu</h2>
+          <h2 className="text-headline-sm text-text-primary">
+            {t('employer.now')}
+          </h2>
           <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatTile
-              label="Heeft een pensioengat"
-              value={percent(baseline.withGapShare)}
-              detail={`van de ${baseline.headcount} medewerkers`}
+              label={t('employer.kpi.withGap')}
+              value={formatPercent(baseline.withGapShare)}
+              detail={t('employer.kpi.withGapDetail', {
+                count: baseline.headcount,
+              })}
             />
             <StatTile
-              label="Gemiddeld gat"
+              label={t('employer.kpi.avgGap')}
               value={
                 baseline.averageGapOfThoseWithGap === null
-                  ? SUPPRESSED
-                  : `${formatEuros(baseline.averageGapOfThoseWithGap)}`
+                  ? suppressed
+                  : formatEuros(baseline.averageGapOfThoseWithGap)
               }
-              detail="per maand, van wie een gat heeft"
+              detail={t('employer.kpi.avgGapDetail')}
               suppressed={baseline.averageGapOfThoseWithGap === null}
-              suppressedNote={SUPPRESSED}
             />
             <StatTile
-              label="Deed de check"
-              value={percent(baseline.ranCheckShare)}
-              detail="heeft het pensioenoverzicht bekeken"
+              label={t('employer.kpi.ranCheck')}
+              value={formatPercent(baseline.ranCheckShare)}
+              detail={t('employer.kpi.ranCheckDetail')}
             />
             <StatTile
-              label="Zette een stap"
-              value={percent(baseline.actedShare)}
-              detail="is daarna iets gaan doen"
+              label={t('employer.kpi.acted')}
+              value={formatPercent(baseline.actedShare)}
+              detail={t('employer.kpi.actedDetail')}
             />
           </div>
         </section>
@@ -128,20 +133,24 @@ export default function EmployerPage() {
         <section className="grid gap-6 lg:grid-cols-2">
           <Card dashboard>
             <h2 className="text-headline-sm text-text-primary">
-              Hoe groot zijn de gaten?
+              {t('employer.distribution.title')}
             </h2>
             <p className="mt-1 text-sub text-text-secondary">
-              Aantal medewerkers per gat, netto per maand.
+              {t('employer.distribution.lead')}
             </p>
 
             {/* Filters sit in one row above the chart they control. */}
             <div
               role="group"
-              aria-label="Filter op leeftijdsgroep"
+              aria-label={t('employer.filter.label')}
               className="mt-4 flex flex-wrap gap-2"
             >
               {COHORT_FILTER_OPTIONS.map((option) => {
                 const active = filter === option.id
+                const label =
+                  option.id === 'all'
+                    ? t(option.labelKey)
+                    : t('cohort.withYears', { range: t(option.labelKey) })
                 return (
                   <button
                     key={option.id}
@@ -154,7 +163,7 @@ export default function EmployerPage() {
                         : 'border-ui-primary text-text-secondary'
                     }`}
                   >
-                    {option.label}
+                    {label}
                   </button>
                 )
               })}
@@ -162,39 +171,43 @@ export default function EmployerPage() {
 
             <p className="mt-3 text-sub text-text-tertiary">
               {filter === 'all'
-                ? `Alle ${baseline.filteredCount} medewerkers.`
-                : `${baseline.filteredCount} medewerkers in deze groep. Het filter geldt alleen voor deze grafiek.`}
+                ? t('employer.filter.allNote', { count: baseline.filteredCount })
+                : t('employer.filter.cohortNote', {
+                    count: baseline.filteredCount,
+                  })}
             </p>
 
             <div className="mt-4">
               <BarChart
-                suppressedNote={SUPPRESSED}
                 bars={baseline.distribution.map((segment) => ({
-                  label: segment.label,
+                  label: t(segment.labelKey),
                   value: segment.count,
                   valueLabel: String(segment.count),
                   suppressed: segment.suppressed,
                   detail: segment.suppressed
-                    ? SUPPRESSED
-                    : `${segment.label}: ${segment.count} medewerkers`,
+                    ? suppressed
+                    : `${t(segment.labelKey)}: ${segment.count}`,
                 }))}
               />
             </div>
 
             {baseline.distribution.some((segment) => segment.suppressed) ? (
               <p className="mt-4 text-sub text-text-secondary">
-                Eén of meer groepen zijn te klein om te tonen. Dat is met opzet:
-                bij minder dan {MIN_GROUP_SIZE} personen zou een getal te veel
-                over één medewerker zeggen.
+                {t('employer.distribution.suppressionNote', {
+                  min: MIN_GROUP_SIZE,
+                })}
               </p>
             ) : null}
 
             <DataTable
-              caption="Aantal medewerkers per grootte van het pensioengat"
-              columns={['Gat per maand', 'Medewerkers']}
+              caption={t('employer.distribution.table.caption')}
+              columns={[
+                t('employer.distribution.table.bucket'),
+                t('employer.distribution.table.count'),
+              ]}
               rows={baseline.distribution.map((segment) => ({
-                label: segment.label,
-                value: segment.suppressed ? SUPPRESSED : String(segment.count),
+                label: t(segment.labelKey),
+                value: segment.suppressed ? suppressed : String(segment.count),
               }))}
             />
           </Card>
@@ -202,42 +215,48 @@ export default function EmployerPage() {
           {/* ----------------------------------------------------- cohorts */}
           <Card dashboard>
             <h2 className="text-headline-sm text-text-primary">
-              Gemiddeld gat per leeftijdsgroep
+              {t('employer.cohorts.title')}
             </h2>
             <p className="mt-1 text-sub text-text-secondary">
-              Netto per maand. Wie het minste tijd heeft, heeft het grootste gat.
+              {t('employer.cohorts.lead')}
             </p>
 
             <div className="mt-6">
               <BarChart
-                suppressedNote={SUPPRESSED}
                 bars={baseline.cohorts.map((cohort) => ({
-                  label: `${cohort.label} jaar`,
+                  label: t('cohort.withYears', { range: t(cohort.labelKey) }),
                   value: cohort.averageGapMonthly ?? 0,
                   valueLabel:
                     cohort.averageGapMonthly === null
-                      ? SUPPRESSED
+                      ? suppressed
                       : formatEuros(cohort.averageGapMonthly),
                   suppressed: cohort.suppressed,
-                  detail: `${cohort.label} jaar · ${cohort.count} medewerkers`,
+                  detail: t('employer.cohorts.table.row', {
+                    range: t(cohort.labelKey),
+                    count: cohort.count,
+                  }),
                 }))}
               />
             </div>
 
             <p className="mt-4 text-sub text-text-secondary">
-              De groep van 50 jaar en ouder heeft het grootste gat. Zij hebben de
-              minste jaren om iets bij te leggen. Dat is de groep waar een
-              compensatieregeling het meeste verschil maakt.
+              {t('employer.cohorts.story')}
             </p>
 
             <DataTable
-              caption="Gemiddeld pensioengat per leeftijdsgroep"
-              columns={['Leeftijd', 'Gemiddeld gat per maand']}
+              caption={t('employer.cohorts.table.caption')}
+              columns={[
+                t('employer.cohorts.table.cohort'),
+                t('employer.cohorts.table.average'),
+              ]}
               rows={baseline.cohorts.map((cohort) => ({
-                label: `${cohort.label} jaar (${cohort.count} medewerkers)`,
+                label: t('employer.cohorts.table.row', {
+                  range: t(cohort.labelKey),
+                  count: cohort.count,
+                }),
                 value:
                   cohort.averageGapMonthly === null
-                    ? SUPPRESSED
+                    ? suppressed
                     : formatEuros(cohort.averageGapMonthly),
               }))}
             />
@@ -248,104 +267,96 @@ export default function EmployerPage() {
         <section>
           <Card dashboard>
             <h2 className="text-headline-sm text-text-primary">
-              Wat als je zou bijdragen?
+              {t('employer.whatIf.title')}
             </h2>
             <p className="mt-1 text-sub text-text-secondary">
-              Schuif om te zien wat een extra bijdrage per medewerker per maand
-              zou doen met het aandeel medewerkers dat een gat heeft.
+              {t('employer.whatIf.lead')}
             </p>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <div>
                 <Slider
-                  label="Extra bijdrage per medewerker"
+                  label={t('employer.whatIf.slider')}
                   value={contribution}
                   min={EMPLOYER_CONTRIBUTION_BOUNDS.min}
                   max={EMPLOYER_CONTRIBUTION_BOUNDS.max}
                   step={EMPLOYER_CONTRIBUTION_BOUNDS.step}
                   onChange={setContribution}
-                  valueLabel={`${formatEuros(euros(contribution))} p/m`}
-                  minLabel={formatEuros(
-                    euros(EMPLOYER_CONTRIBUTION_BOUNDS.min),
-                  )}
-                  maxLabel={formatEuros(
-                    euros(EMPLOYER_CONTRIBUTION_BOUNDS.max),
-                  )}
-                  hint={`Dat is ${formatEuros(
-                    euros(contribution * baseline.headcount * 12),
-                  )} per jaar voor ${baseline.headcount} medewerkers.`}
+                  valueLabel={`${formatEuros(euros(contribution))} ${t('perMonthShort')}`}
+                  minLabel={formatEuros(euros(EMPLOYER_CONTRIBUTION_BOUNDS.min))}
+                  maxLabel={formatEuros(euros(EMPLOYER_CONTRIBUTION_BOUNDS.max))}
+                  hint={t('employer.whatIf.sliderHint', {
+                    annual: formatEuros(
+                      euros(contribution * baseline.headcount * 12),
+                    ),
+                    count: baseline.headcount,
+                  })}
                 />
 
                 <div className="mt-6">
-                  <MicroLabel>
-                    Aandeel met een gat na deze bijdrage
-                  </MicroLabel>
+                  <MicroLabel>{t('employer.whatIf.barLabel')}</MicroLabel>
                   <div className="mt-2">
                     <ReferenceBar
                       value={whatIf.expected.withGapShare * 100}
                       low={whatIf.optimistic.withGapShare * 100}
                       high={whatIf.pessimistic.withGapShare * 100}
                       baseline={baseline.withGapShare * 100}
-                      valueLabel={`${percent(
-                        whatIf.optimistic.withGapShare,
-                      )} – ${percent(whatIf.pessimistic.withGapShare)} houdt een gat`}
-                      baselineLabel={`nu ${percent(baseline.withGapShare)}`}
+                      valueLabel={t('employer.whatIf.barValue', {
+                        low: formatPercent(whatIf.optimistic.withGapShare),
+                        high: formatPercent(whatIf.pessimistic.withGapShare),
+                      })}
+                      baselineLabel={t('employer.whatIf.barBaseline', {
+                        share: formatPercent(baseline.withGapShare),
+                      })}
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <MicroLabel>Per scenario</MicroLabel>
+                <MicroLabel>{t('employer.whatIf.perScenario')}</MicroLabel>
                 <dl className="mt-2 divide-y divide-ui-secondary">
-                  {(['pessimistic', 'expected', 'optimistic'] as const).map(
-                    (scenario) => {
-                      const result = whatIf[scenario]
-                      const delta =
-                        baseline.withGapShare - result.withGapShare
-                      return (
-                        <div
-                          key={scenario}
-                          className="flex items-baseline justify-between gap-3 py-3"
-                        >
-                          <dt className="text-sub text-text-secondary">
-                            {SCENARIO_LABELS_NL[scenario]}{' '}
-                            <span className="text-text-tertiary">
-                              {(
-                                assumptions.returns[scenario] * 100
-                              ).toFixed(0)}
-                              %
-                            </span>
-                          </dt>
-                          <dd className="text-right">
-                            <span className="text-headline-sm tabular-nums text-text-primary">
-                              {percent(result.withGapShare)}
-                            </span>
-                            <span className="ml-2 text-sub tabular-nums text-highlight-turquoise">
-                              −{Math.round(delta * 100)} pp
-                            </span>
-                          </dd>
-                        </div>
-                      )
-                    },
-                  )}
+                  {SCENARIOS.map((scenario) => {
+                    const scenarioResult = whatIf[scenario]
+                    const delta =
+                      baseline.withGapShare - scenarioResult.withGapShare
+                    return (
+                      <div
+                        key={scenario}
+                        className="flex items-baseline justify-between gap-3 py-3"
+                      >
+                        <dt className="text-sub text-text-secondary">
+                          {t(SCENARIO_LABEL_KEYS[scenario])}{' '}
+                          <span className="text-text-tertiary">
+                            {(assumptions.returns[scenario] * 100).toFixed(0)}%
+                          </span>
+                        </dt>
+                        <dd className="text-right">
+                          <span className="text-headline-sm tabular-nums text-text-primary">
+                            {formatPercent(scenarioResult.withGapShare)}
+                          </span>
+                          <span className="ml-2 text-sub tabular-nums text-highlight-turquoise">
+                            −{Math.round(delta * 100)} pp
+                          </span>
+                        </dd>
+                      </div>
+                    )
+                  })}
                 </dl>
                 <p className="mt-3 text-sub text-text-tertiary">
-                  We laten altijd drie scenario&apos;s zien, nooit één bedrag. Wat
-                  beleggen opbrengt weet niemand vooraf.{' '}
+                  {t('employer.whatIf.scenarioNote')}{' '}
                   <Link
                     href="/aannames"
                     className="text-highlight-turquoise underline underline-offset-2"
                   >
-                    Bekijk de aannames
+                    {t('disclaimer.viewAssumptions')}
                   </Link>
                 </p>
               </div>
             </div>
 
             <p className="mt-6 border-t border-ui-secondary pt-4 text-sub text-text-tertiary">
-              Indicatie op basis van aannames. Dit is informatie, geen advies over
-              een pensioenregeling.
+              {t('employer.whatIf.disclaimer')}
             </p>
           </Card>
         </section>
@@ -353,12 +364,10 @@ export default function EmployerPage() {
         {/* ---------------------------------------------------- privacy */}
         <footer className="pb-10">
           <p className="text-sub text-text-secondary">
-            Op basis van geanonimiseerde totalen. Individuele gegevens zijn nooit
-            zichtbaar voor je werkgever.
+            {t('employer.privacy.footer')}
           </p>
           <p className="mt-2 text-sub text-text-tertiary">
-            Groepen kleiner dan {MIN_GROUP_SIZE} personen tonen we niet. Dan zie
-            je &ldquo;{SUPPRESSED.toLowerCase()}&rdquo; in plaats van een getal.
+            {t('employer.privacy.footerNote', { min: MIN_GROUP_SIZE })}
           </p>
         </footer>
       </main>

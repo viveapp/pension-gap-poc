@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { LocaleSwitch } from '@/components/LocaleSwitch'
 import { PersonaSwitcher } from '@/components/PersonaSwitcher'
 import {
   ButtonLink,
@@ -10,30 +11,37 @@ import {
   Screen,
   StickyFooter,
 } from '@/components/ui'
-import { CONSENT_SOURCES, NOT_SHARED } from '@/lib/pension/sources'
+import { useI18n } from '@/i18n/LocaleProvider'
+import { CONSENT_SOURCES, NOT_SHARED_KEYS } from '@/lib/pension/sources'
 
 /** Screen 1 — intro. Warm canvas, one question, one action. */
 export default function IntroPage() {
+  const { t } = useI18n()
+
   return (
     <Screen tone="warm">
       <Gutter wide className="pt-10">
-        <MicroLabel className="text-highlight-turquoise">Vive</MicroLabel>
+        <div className="flex items-start justify-between gap-4">
+          <MicroLabel className="text-highlight-turquoise">
+            {t('app.name')}
+          </MicroLabel>
+          <LocaleSwitch />
+        </div>
 
         <h1 className="text-headline-lg mt-6 text-text-primary">
-          Ben je op koers voor later?
+          {t('intro.title')}
         </h1>
 
         <p className="text-body-lg mt-4 text-text-secondary">
-          In één keer zie je hoeveel geld je na je pensioen per maand krijgt. En
-          of dat genoeg is.
+          {t('intro.lead')}
         </p>
 
         <div className="mt-8 rounded-dashboard bg-canvas-primary p-6 card-elevation-sm">
           <h2 className="text-headline-sm text-text-primary">
-            Wat we voor je ophalen
+            {t('intro.sources.title')}
           </h2>
           <p className="mt-1 text-sub text-text-secondary">
-            Je geeft eenmalig toestemming. Daarna rekenen we het uit.
+            {t('intro.sources.lead')}
           </p>
 
           <ul className="mt-4 space-y-3">
@@ -44,34 +52,37 @@ export default function IntroPage() {
                   className="mt-2 size-2 shrink-0 rounded-full bg-highlight-brand"
                 />
                 <div>
-                  <p className="text-body text-text-primary">{source.party}</p>
-                  <p className="text-sub text-text-tertiary">{source.reason}</p>
+                  <p className="text-body text-text-primary">
+                    {t(source.partyKey)}
+                  </p>
+                  <p className="text-sub text-text-tertiary">
+                    {t(source.reasonKey)}
+                  </p>
                 </div>
               </li>
             ))}
           </ul>
 
           <div className="mt-5 border-t border-ui-secondary pt-4">
-            <MicroLabel>Wat we niet ophalen</MicroLabel>
+            <MicroLabel>{t('intro.notShared.title')}</MicroLabel>
             <p className="mt-2 text-sub text-text-secondary">
-              {NOT_SHARED.join(' · ')}
+              {NOT_SHARED_KEYS.map((key) => t(key)).join(' · ')}
             </p>
           </div>
         </div>
 
         <p className="mt-6 text-sub text-text-tertiary">
-          Je krijgt een indicatie op basis van aannames. Dat is informatie, geen
-          advies. Je beslist zelf wat je ermee doet.
+          {t('intro.footnote')}
         </p>
       </Gutter>
 
       <StickyFooter>
-        <ButtonLink href="/consent">Check mijn pensioen</ButtonLink>
+        <ButtonLink href="/consent">{t('intro.cta')}</ButtonLink>
         <Link
           href="/werkgever"
           className="mt-3 block text-center text-sub text-text-tertiary underline underline-offset-2"
         >
-          Ik ben werkgever
+          {t('intro.employerLink')}
         </Link>
       </StickyFooter>
 

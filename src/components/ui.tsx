@@ -10,8 +10,9 @@ import {
   type ReactNode,
 } from 'react'
 
-import { INDICATION_DISCLAIMER } from '@/lib/pension/constants'
-import { formatEuros, type Cents } from '@/lib/pension/money'
+import { useI18n } from '@/i18n/LocaleProvider'
+import type { Cents } from '@/lib/pension/money'
+import { LocaleSwitch } from './LocaleSwitch'
 
 /**
  * Small UI kit following DESIGN.md: 12px radius, 48px primary buttons, soft
@@ -61,20 +62,23 @@ export const AppBar = ({
   title,
   backHref,
   action,
+  showLocale = true,
 }: {
   title?: string
   /** Omit to use browser history. */
   backHref?: string
   action?: ReactNode
+  showLocale?: boolean
 }) => {
   const router = useRouter()
+  const { t } = useI18n()
 
   return (
     <header className="flex min-h-14 items-center gap-2 px-4 py-2">
       {backHref !== undefined ? (
         <Link
           href={backHref}
-          aria-label="Terug"
+          aria-label={t('nav.back')}
           className="-ml-2 flex size-11 items-center justify-center rounded-full text-text-primary"
         >
           <BackArrow />
@@ -82,7 +86,7 @@ export const AppBar = ({
       ) : (
         <button
           type="button"
-          aria-label="Terug"
+          aria-label={t('nav.back')}
           onClick={() => router.back()}
           className="-ml-2 flex size-11 items-center justify-center rounded-full text-text-primary"
         >
@@ -90,9 +94,12 @@ export const AppBar = ({
         </button>
       )}
       {title ? (
-        <h1 className="text-headline-sm text-text-primary">{title}</h1>
+        <h1 className="text-headline-sm truncate text-text-primary">{title}</h1>
       ) : null}
-      <div className="ml-auto">{action}</div>
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {action}
+        {showLocale ? <LocaleSwitch /> : null}
+      </div>
     </header>
   )
 }
@@ -254,6 +261,7 @@ export const AnimatedEuros = ({
   revealFromZero?: boolean
   className?: string
 }) => {
+  const { formatEuros } = useI18n()
   const [displayed, setDisplayed] = useState<Cents>(
     revealFromZero ? 0 : cents,
   )
@@ -414,17 +422,20 @@ export const IndicationNote = ({
   className = '',
 }: {
   className?: string
-}) => (
-  <p className={`text-sub text-text-tertiary ${className}`}>
-    {INDICATION_DISCLAIMER}{' '}
-    <Link
-      href="/aannames"
-      className="text-highlight-turquoise underline underline-offset-2"
-    >
-      Bekijk de aannames
-    </Link>
-  </p>
-)
+}) => {
+  const { t } = useI18n()
+  return (
+    <p className={`text-sub text-text-tertiary ${className}`}>
+      {t('disclaimer.indication')}{' '}
+      <Link
+        href="/aannames"
+        className="text-highlight-turquoise underline underline-offset-2"
+      >
+        {t('disclaimer.viewAssumptions')}
+      </Link>
+    </p>
+  )
+}
 
 export const InfoBanner = ({
   tone = 'neutral',
@@ -489,5 +500,3 @@ export const Row = ({
     <p className="text-body shrink-0 tabular-nums text-text-primary">{amount}</p>
   </div>
 )
-
-export { formatEuros }

@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 
+import { useI18n } from '@/i18n/LocaleProvider'
 import { PERSONAS } from '@/lib/pension/personas'
 import { usePension } from '@/state/PensionProvider'
 
 /**
  * Dev-only persona switcher. Deliberately styled as scaffolding rather than
- * product UI — purple brand colour, "DEV" label — so nobody mistakes it for a
+ * product UI — purple brand colour, "Dev" label — so nobody mistakes it for a
  * feature in a demo.
  *
  * Switching persona loads the mock data directly and marks consent as given, so
@@ -15,6 +16,7 @@ import { usePension } from '@/state/PensionProvider'
  */
 export const PersonaSwitcher = () => {
   const { personaId, selectPersona, loadPersona, hasConsented } = usePension()
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const selected = PERSONAS.find((persona) => persona.personaId === personaId)
 
@@ -31,7 +33,7 @@ export const PersonaSwitcher = () => {
       {open ? (
         <div className="pointer-events-auto mb-2 w-full rounded-card border border-brand-purple/40 bg-canvas-primary p-2 shadow-soft-md">
           <p className="px-2 py-1 text-label uppercase text-brand-purple">
-            Dev · testpersona
+            {t('dev.label')}
           </p>
           <ul>
             {PERSONAS.map((persona) => {
@@ -49,7 +51,7 @@ export const PersonaSwitcher = () => {
                       {persona.displayName}
                     </span>
                     <span className="block text-sub text-text-tertiary">
-                      {persona.summary}
+                      {t(persona.summaryKey)}
                     </span>
                   </button>
                 </li>
@@ -65,7 +67,9 @@ export const PersonaSwitcher = () => {
         aria-expanded={open}
         className="pointer-events-auto rounded-pill bg-brand-purple px-3 py-2 text-label uppercase text-white shadow-soft-md"
       >
-        Dev · {selected?.displayName ?? 'kies persona'}
+        {selected
+          ? t('dev.chip', { name: selected.displayName })
+          : t('dev.chipEmpty')}
       </button>
     </div>
   )

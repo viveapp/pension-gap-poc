@@ -12,8 +12,9 @@ import {
   Screen,
   StickyFooter,
 } from '@/components/ui'
+import { useI18n } from '@/i18n/LocaleProvider'
 import { MOCK_HANDOFF_STAGES } from '@/lib/pension/ockto'
-import { CONSENT_SOURCES, NOT_SHARED } from '@/lib/pension/sources'
+import { CONSENT_SOURCES, NOT_SHARED_KEYS } from '@/lib/pension/sources'
 import { usePension } from '@/state/PensionProvider'
 
 /**
@@ -45,19 +46,19 @@ export default function ConsentPage() {
 /* -------------------------------------------------------------------------- */
 
 const ConsentStep = ({ onNext }: { onNext: () => void }) => {
+  const { t } = useI18n()
   const [agreed, setAgreed] = useState(false)
 
   return (
     <>
-      <AppBar backHref="/" title="Toestemming" />
+      <AppBar backHref="/" title={t('consent.title')} />
 
       <Gutter wide>
         <h2 className="text-headline-md text-text-primary">
-          Dit delen we, en waarom
+          {t('consent.heading')}
         </h2>
         <p className="mt-2 text-body text-text-secondary">
-          Je geeft per bron toestemming. We halen alleen op wat we nodig hebben
-          om je pensioen te berekenen.
+          {t('consent.lead')}
         </p>
 
         <ul className="mt-6 space-y-3">
@@ -67,37 +68,38 @@ const ConsentStep = ({ onNext }: { onNext: () => void }) => {
               className="rounded-card bg-canvas-primary p-4 card-elevation-sm"
             >
               <p className="text-headline-sm text-text-primary">
-                {source.party}
+                {t(source.partyKey)}
               </p>
               <ul className="mt-3 space-y-1.5">
-                {source.shares.map((item) => (
-                  <li key={item} className="flex gap-2">
+                {source.shareKeys.map((shareKey) => (
+                  <li key={shareKey} className="flex gap-2">
                     <Check />
-                    <span className="text-sub text-text-secondary">{item}</span>
+                    <span className="text-sub text-text-secondary">
+                      {t(shareKey)}
+                    </span>
                   </li>
                 ))}
               </ul>
               <p className="mt-3 border-t border-ui-secondary pt-3 text-sub text-text-tertiary">
-                {source.reason}
+                {t(source.reasonKey)}
               </p>
             </li>
           ))}
         </ul>
 
         <div className="mt-4 rounded-card bg-ui-warm p-4">
-          <MicroLabel>Dit delen we niet</MicroLabel>
+          <MicroLabel>{t('consent.notShared.title')}</MicroLabel>
           <ul className="mt-2 space-y-1">
-            {NOT_SHARED.map((item) => (
-              <li key={item} className="text-sub text-text-secondary">
-                — {item}
+            {NOT_SHARED_KEYS.map((key) => (
+              <li key={key} className="text-sub text-text-secondary">
+                — {t(key)}
               </li>
             ))}
           </ul>
         </div>
 
         <p className="mt-4 text-sub text-text-tertiary">
-          Je gegevens blijven van jou. Je kunt je toestemming later intrekken. In
-          dit prototype slaan we niets op: sluit je het tabblad, dan is alles weg.
+          {t('consent.retention')}
         </p>
 
         <label className="mt-6 flex cursor-pointer items-start gap-3">
@@ -108,14 +110,14 @@ const ConsentStep = ({ onNext }: { onNext: () => void }) => {
             className="mt-1 size-5 shrink-0 accent-highlight-brand"
           />
           <span className="text-body text-text-primary">
-            Ik geef toestemming om deze gegevens eenmalig op te halen.
+            {t('consent.checkbox')}
           </span>
         </label>
       </Gutter>
 
       <StickyFooter>
         <Button disabled={!agreed} onClick={onNext}>
-          Verder met inloggen
+          {t('consent.cta')}
         </Button>
       </StickyFooter>
     </>
@@ -143,48 +145,48 @@ const Check = () => (
 
 /* -------------------------------------------------------------------------- */
 
-const LoginStep = ({ onNext }: { onNext: () => void }) => (
-  <>
-    <AppBar title="Inloggen" />
+const LoginStep = ({ onNext }: { onNext: () => void }) => {
+  const { t } = useI18n()
 
-    <Gutter wide>
-      <div className="rounded-card border-[1.5px] border-dashed border-highlight-orange bg-highlight-orange/10 p-3">
-        <p className="text-sub text-text-primary">
-          <strong>Demo.</strong> Dit is geen echte DigiD. In het prototype hoef
-          je niets in te vullen.
-        </p>
-      </div>
+  return (
+    <>
+      <AppBar title={t('login.title')} />
 
-      <div className="mt-6 rounded-dashboard bg-canvas-primary p-6 card-elevation-md">
-        <MicroLabel>Stap 1 van 2</MicroLabel>
-        <h2 className="text-headline-md mt-2 text-text-primary">
-          Log in met DigiD
-        </h2>
-        <p className="mt-2 text-sub text-text-secondary">
-          Je gaat naar de inlogomgeving van de overheid. Daarna kom je
-          automatisch terug in de Vive-app.
-        </p>
-
-        <div className="mt-6 space-y-3">
-          <FakeField label="Gebruikersnaam" />
-          <FakeField label="Wachtwoord" />
+      <Gutter wide>
+        <div className="rounded-card border-[1.5px] border-dashed border-highlight-orange bg-highlight-orange/10 p-3">
+          <p className="text-sub text-text-primary">
+            <strong>{t('login.demoNoticeStrong')}</strong>{' '}
+            {t('login.demoNotice')}
+          </p>
         </div>
 
-        <p className="mt-4 text-sub text-text-tertiary">
-          Na het inloggen bevestig je in de DigiD-app dat je de gegevens wilt
-          delen.
-        </p>
-      </div>
-    </Gutter>
+        <div className="mt-6 rounded-dashboard bg-canvas-primary p-6 card-elevation-md">
+          <MicroLabel>{t('login.step')}</MicroLabel>
+          <h2 className="text-headline-md mt-2 text-text-primary">
+            {t('login.heading')}
+          </h2>
+          <p className="mt-2 text-sub text-text-secondary">{t('login.lead')}</p>
 
-    <StickyFooter>
-      <Button onClick={onNext}>Inloggen (demo)</Button>
-      <p className="mt-3 text-center text-sub text-text-tertiary">
-        Je deelt alleen de gegevens die je net hebt gezien.
-      </p>
-    </StickyFooter>
-  </>
-)
+          <div className="mt-6 space-y-3">
+            <FakeField label={t('login.username')} />
+            <FakeField label={t('login.password')} />
+          </div>
+
+          <p className="mt-4 text-sub text-text-tertiary">
+            {t('login.afterwards')}
+          </p>
+        </div>
+      </Gutter>
+
+      <StickyFooter>
+        <Button onClick={onNext}>{t('login.cta')}</Button>
+        <p className="mt-3 text-center text-sub text-text-tertiary">
+          {t('login.footnote')}
+        </p>
+      </StickyFooter>
+    </>
+  )
+}
 
 const FakeField = ({ label }: { label: string }) => (
   <div>
@@ -201,6 +203,7 @@ const FakeField = ({ label }: { label: string }) => (
 const FetchingStep = () => {
   const router = useRouter()
   const { personaId, loadPersona } = usePension()
+  const { t } = useI18n()
   const [doneCount, setDoneCount] = useState(0)
 
   useEffect(() => {
@@ -238,14 +241,14 @@ const FetchingStep = () => {
 
   return (
     <>
-      <AppBar title="Gegevens ophalen" />
+      <AppBar title={t('fetching.title')} />
 
       <Gutter wide>
         <h2 className="text-headline-md text-text-primary">
-          We halen je gegevens op
+          {t('fetching.heading')}
         </h2>
         <p className="mt-2 text-body text-text-secondary">
-          Dit duurt een paar seconden. Blijf even in de app.
+          {t('fetching.lead')}
         </p>
 
         <ul className="mt-8 space-y-4">
@@ -274,9 +277,11 @@ const FetchingStep = () => {
                       done || active ? 'text-text-primary' : 'text-text-tertiary'
                     }`}
                   >
-                    {stage.label}
+                    {t(stage.labelKey)}
                   </p>
-                  <p className="text-sub text-text-tertiary">{stage.party}</p>
+                  <p className="text-sub text-text-tertiary">
+                    {t(stage.partyKey)}
+                  </p>
                 </div>
               </li>
             )
